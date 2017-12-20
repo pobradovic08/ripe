@@ -145,9 +145,11 @@ base_url = "https://stat.ripe.net/data/as-routing-consistency/data.json?resource
 
 argv = argparse.ArgumentParser()
 argv.add_argument("ASN", help="Autonomous system number", type=asn_type)
-argv.add_argument("-p", "--prefixes", help="Show only prefixes", action='store_true')
-argv.add_argument("-i", "--imports", help="Show only imports", action='store_true')
-argv.add_argument("-e", "--exports", help="Show only exports", action='store_true')
+
+subargv = argv.add_mutually_exclusive_group()
+subargv.add_argument("-p", "--prefixes", help="Show only prefixes", action='store_true')
+subargv.add_argument("-i", "--imports", help="Show only imports", action='store_true')
+subargv.add_argument("-e", "--exports", help="Show only exports", action='store_true')
 args = argv.parse_args()
 
 asn = args.ASN
