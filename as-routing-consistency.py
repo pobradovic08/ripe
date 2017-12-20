@@ -31,13 +31,37 @@ def print_prefix_info():
         return
 
     print("-" * 80)
-    print("{:>30s}{:>12s}{:>12s}\t{:s}".format("Prefix", "BGP", "WHOIS", "WHOIS source"))
+    print("{:>30s}{:>12s}{:>12s}\t{:s}".format("PREFIX", "BGP", "WHOIS", "WHOIS SOURCE"))
     print("-" * 80)
     for prefix in data['data']['prefixes']:
         bgp_status = "OK" if prefix['in_bgp'] else "NO ROUTE"
         whois_status = "OK" if prefix['in_whois'] else "MISSING"
         irr_sources = ", ".join(prefix["irr_sources"])
         print("{:>30s}{:>12s}{:>12s}\t{:s}".format(prefix['prefix'], bgp_status, whois_status, irr_sources))
+
+def print_import_info():
+    global data
+
+    print("=" * 80)
+    print("IMPORTS")
+
+    if not len(data['data']['imports']):
+        print("-" * 80)
+        print("No imports.")
+        print("=" * 80)
+        return
+
+    print("-" * 80)
+    print("{:>10s}{:>15s}{:>15s}".format("PEER ASN", "BGP", "WHOIS"))
+    print("-" * 80)
+    for imports in data['data']['imports']:
+        bgp_status = "OK" if imports['in_bgp'] else "NO PEERING"
+        whois_status = "OK" if imports['in_whois'] else "NO IMPORT"
+        peer_asn = "AS{:d}".format(imports['peer'])
+        print("{:>10s}{:>15s}{:>15s}".format(peer_asn, bgp_status, whois_status))
+
+def print_export_info():
+    pass
 
 def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
     """
@@ -77,8 +101,14 @@ try:
             print_request_info()
             if args.prefixes:
                 print_prefix_info()
+            elif args.imports:
+                print_import_info()
+            elif args.exports:
+                print_export_info()
             else:
                 print_prefix_info()
+                print_import_info()
+                print_export_info()
             print("=" * 80)
 
 except urllib.error.HTTPError:
