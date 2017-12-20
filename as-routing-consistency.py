@@ -5,10 +5,12 @@ import urllib.error
 import argparse
 import json
 import re
+from colorama import init, Fore, Back, Style
 
 def print_request_info():
     global data
 
+    print(Style.DIM)
     print("=" * 80)
     print("Request information:")
     print(" {:20s}: {:s}".format("Server ID", data['server_id']))
@@ -17,12 +19,13 @@ def print_request_info():
     print(" {:20s}: {:s}".format("Query ID", data['query_id']))
     if data['cached']:
         print("Request is cached!")
+    print(Style.RESET_ALL)
 
 def print_prefix_info():
     global data
 
     print("=" * 80)
-    print("PREFIXES")
+    print(Style.BRIGHT + Back.BLUE, "{:78s}".format("PREFIXES"), Style.RESET_ALL)
 
     if not len(data['data']['prefixes']):
         print("-" * 80)
@@ -31,19 +34,19 @@ def print_prefix_info():
         return
 
     print("-" * 80)
-    print("{:>30s}{:>12s}{:>12s}\t{:s}".format("PREFIX", "BGP", "WHOIS", "WHOIS SOURCE"))
+    print("{:s}{:>30s}{:>12s}{:>12s}\t{:s}{:s}".format(Style.BRIGHT, "PREFIX", "BGP", "WHOIS", "WHOIS SOURCE", Style.RESET_ALL))
     print("-" * 80)
     for prefix in data['data']['prefixes']:
-        bgp_status = "OK" if prefix['in_bgp'] else "NO ROUTE"
-        whois_status = "OK" if prefix['in_whois'] else "MISSING"
+        bgp_status = _paint_green("OK") if prefix['in_bgp'] else _paint_red("NO ROUTE")
+        whois_status = _paint_green("OK") if prefix['in_whois'] else _paint_red("MISSING")
         irr_sources = ", ".join(prefix["irr_sources"])
-        print("{:>30s}{:>12s}{:>12s}\t{:s}".format(prefix['prefix'], bgp_status, whois_status, irr_sources))
+        print("{:>30s}{:>22s}{:>22s}\t{:s}".format(prefix['prefix'], bgp_status, whois_status, irr_sources))
 
 def print_import_info():
     global data
 
     print("=" * 80)
-    print("IMPORTS")
+    print(Style.BRIGHT  + Back.BLUE, "{:78s}".format("IMPORTS"), Style.RESET_ALL)
 
     if not len(data['data']['imports']):
         print("-" * 80)
@@ -52,19 +55,19 @@ def print_import_info():
         return
 
     print("-" * 80)
-    print("{:>10s}{:>15s}{:>15s}".format("PEER ASN", "BGP", "WHOIS"))
+    print("{:s}{:>10s}{:>15s}{:>15s}{:s}".format(Style.BRIGHT, "PEER ASN", "BGP", "WHOIS", Style.RESET_ALL))
     print("-" * 80)
     for imports in data['data']['imports']:
-        bgp_status = "OK" if imports['in_bgp'] else "NO PEERING"
-        whois_status = "OK" if imports['in_whois'] else "NO IMPORT"
+        bgp_status = _paint_green("OK") if imports['in_bgp'] else _paint_red("NO PEERING")
+        whois_status = _paint_green("OK") if imports['in_whois'] else _paint_red("NO IMPORT")
         peer_asn = "AS{:d}".format(imports['peer'])
-        print("{:>10s}{:>15s}{:>15s}".format(peer_asn, bgp_status, whois_status))
+        print("{:>10s}{:>25s}{:>25s}".format(peer_asn, bgp_status, whois_status))
 
 def print_export_info():
     global data
 
     print("=" * 80)
-    print("EXPORTS")
+    print(Style.BRIGHT + Back.BLUE, "{:78s}".format("EXPORTS"), Style.RESET_ALL)
 
     if not len(data['data']['exports']):
         print("-" * 80)
@@ -73,13 +76,13 @@ def print_export_info():
         return
 
     print("-" * 80)
-    print("{:>10s}{:>15s}{:>15s}".format("PEER ASN", "BGP", "WHOIS"))
+    print("{:s}{:>10s}{:>15s}{:>15s}{:s}".format(Style.BRIGHT, "PEER ASN", "BGP", "WHOIS", Style.RESET_ALL))
     print("-" * 80)
     for exports in data['data']['exports']:
-        bgp_status = "OK" if exports['in_bgp'] else "NO PEERING"
-        whois_status = "OK" if exports['in_whois'] else "NO EXPORT"
+        bgp_status = _paint_green("OK") if exports['in_bgp'] else _paint_red("NO PEERING")
+        whois_status = _paint_green("OK") if exports['in_whois'] else _paint_red("NO EXPORT")
         peer_asn = "AS{:d}".format(exports['peer'])
-        print("{:>10s}{:>15s}{:>15s}".format(peer_asn, bgp_status, whois_status))
+        print("{:>10s}{:>25s}{:>25s}".format(peer_asn, bgp_status, whois_status))
 
 def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
     """
@@ -93,6 +96,17 @@ def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
         return match.group(2)
     else:
         raise argparse.ArgumentTypeError("ASN should be in AS1234 or 1234 format")
+
+def _paint_green(str):
+    return Fore.LIGHTGREEN_EX + str + Fore.RESET
+
+def _paint_red(str):
+    return Fore.LIGHTRED_EX + str + Fore.RESET
+
+
+
+# Colorama init
+init()
 
 base_url = "https://stat.ripe.net/data/as-routing-consistency/data.json?resource=AS"
 
@@ -114,8 +128,8 @@ try:
         status = data['status']
         if status == 'ok':
             print("=" * 80)
-            print("{:20s}:\tAS{:s}".format("Resource ASN", data['data']['resource']))
-            print("{:20s}:\t{:s}".format("Authority", data['data']['authority']))
+            print("{:20s}:\t{:s}AS{:s}{:s}".format("Resource ASN", Style.BRIGHT, data['data']['resource'], Style.RESET_ALL))
+            print("{:20s}:\t{:s}{:s}{:s}".format("Authority", Style.BRIGHT, data['data']['authority'], Style.RESET_ALL))
             print_request_info()
             if args.prefixes:
                 print_prefix_info()
