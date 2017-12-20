@@ -61,7 +61,25 @@ def print_import_info():
         print("{:>10s}{:>15s}{:>15s}".format(peer_asn, bgp_status, whois_status))
 
 def print_export_info():
-    pass
+    global data
+
+    print("=" * 80)
+    print("EXPORTS")
+
+    if not len(data['data']['exports']):
+        print("-" * 80)
+        print("No exports.")
+        print("=" * 80)
+        return
+
+    print("-" * 80)
+    print("{:>10s}{:>15s}{:>15s}".format("PEER ASN", "BGP", "WHOIS"))
+    print("-" * 80)
+    for exports in data['data']['exports']:
+        bgp_status = "OK" if exports['in_bgp'] else "NO PEERING"
+        whois_status = "OK" if exports['in_whois'] else "NO EXPORT"
+        peer_asn = "AS{:d}".format(exports['peer'])
+        print("{:>10s}{:>15s}{:>15s}".format(peer_asn, bgp_status, whois_status))
 
 def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
     """
