@@ -1,0 +1,5 @@
+*.swp
+logs/**
+vendor/**
+.idea/**
+*.lock
