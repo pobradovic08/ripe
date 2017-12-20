@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+
+import urllib.request
+import urllib.error
+import argparse
+import json
+import re
+from colorama import init, Fore, Back, Style
+
+
+def print_request_info():
+    """
+    Display info about API request/response
+    :return:
+    """
+    global data
+
+    print(Style.DIM)
+    print("=" * 80)
+    print("Request information:")
+    print(" {:20s}: {:s}".format("Server ID", data['server_id']))
+    print(" {:20s}: {:s}".format("Version", data['version']))
+    print(" {:20s}: {:s}".format("Time:", data['time']))
+    print(" {:20s}: {:s}".format("Query ID", data['query_id']))
+    if data['cached']:
+        print("Request is cached!")
+    print(Style.RESET_ALL)
+
+
+def print_prefix_info(prefixes):
+    """
+    Compare prefixes announced via BGP and route object created in RIPE DB.
+    :return:
+    """
+    global data
+
+    print("=" * 80)
+    print(Style.BRIGHT + Back.BLUE, "{:78s}".format("PREFIXES"), Style.RESET_ALL)
+
+    if not len(data['data']['prefixes']):
+        print("-" * 80)
+        print("No prefixes.")
+        print("=" * 80)
+        return
+
+    print("-" * 80)
+    print("-" * 80)
+    for prefix in prefixes:
+        print(prefix)
+
+
+def print_ipv4_info():
+    global data
+    print_prefix_info(data['data']['prefixes']['ipv4'])
+
+
+def print_ipv6_info():
+    global data
+    print_prefix_info(data['data']['prefixes']['ipv6'])
+
+
+def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
+    """
+    Argparse type checker
+    :param asn:         ASN passed by argparse
+    :param pattern:     Allow ASXXXX or just XXXX
+    :return:            Return ASN without the "AS" prefix
+    """
+    match = pattern.match(asn)
+    if match:
+        return match.group(2)
+    else:
+        raise argparse.ArgumentTypeError("ASN should be in AS1234 or 1234 format")
+
+
+def _paint_green(str):
+    """
+    Encapsulate string with terminal color (green)
+    :param str:
+    :return:
+    """
+    return Fore.LIGHTGREEN_EX + str + Fore.RESET
+
+
+def _paint_red(str):
+    """
+    Encapsulate string with terminal color (red)
+    :param str:
+    :return:
+    """
+    return Fore.LIGHTRED_EX + str + Fore.RESET
+
+
+# Colorama init
+init()
+
+base_url = "https://stat.ripe.net/data/reverse-dns-consistency/data.json?resource=AS"
+
+argv = argparse.ArgumentParser()
+argv.add_argument("ASN", help="Autonomous system number", type=asn_type)
+
+subargv = argv.add_mutually_exclusive_group()
+subargv.add_argument("-4", "--ipv4", help="Show only IPv4 zones", action='store_true')
+subargv.add_argument("-6", "--ipv6", help="Show only IPv6", action='store_true')
+args = argv.parse_args()
+
+asn = args.ASN
+
+url = base_url + str(asn)
+
+if args.ipv4:
+    url += "&ipv6=0"
+elif args.ipv6:
+    url += "&ipv4=0"
+
+try:
+    response = urllib.request.urlopen(url)
+    data = json.loads(response.read().decode('utf-8'))
+    if 'status' in data:
+        status = data['status']
+        if status == 'ok':
+            print("=" * 80)
+            print("{:20s}:\t{:s}AS{:s}{:s}".format("Resource ASN", Style.BRIGHT, data['data']['resource'],
+                                                   Style.RESET_ALL))
+            ipv4_flare = Style.BRIGHT if data['data']['ipv4'] else Style.DIM
+            print("{:20s}:\t{:s}{:s}{:s}".format("Address family:", ipv4_flare, "IPv4", Style.RESET_ALL))
+
+            print_request_info()
+
+            if args.ipv4:
+                print_ipv4_info()
+            elif args.ipv6:
+                print_ipv6_info()
+            else:
+                print_ipv4_info()
+                print_ipv6_info()
+            print("=" * 80)
+
+except urllib.error.HTTPError:
+    print("Request error")
