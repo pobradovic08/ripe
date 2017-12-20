@@ -7,7 +7,12 @@ import json
 import re
 from colorama import init, Fore, Back, Style
 
+
 def print_request_info():
+    """
+    Display info about API request/response
+    :return:
+    """
     global data
 
     print(Style.DIM)
@@ -21,7 +26,12 @@ def print_request_info():
         print("Request is cached!")
     print(Style.RESET_ALL)
 
+
 def print_prefix_info():
+    """
+    Compare prefixes announced via BGP and route object created in RIPE DB.
+    :return:
+    """
     global data
 
     print("=" * 80)
@@ -34,7 +44,8 @@ def print_prefix_info():
         return
 
     print("-" * 80)
-    print("{:s}{:>30s}{:>12s}{:>12s}\t{:s}{:s}".format(Style.BRIGHT, "PREFIX", "BGP", "WHOIS", "WHOIS SOURCE", Style.RESET_ALL))
+    print("{:s}{:>30s}{:>12s}{:>12s}\t{:s}{:s}".format(Style.BRIGHT, "PREFIX", "BGP", "WHOIS", "WHOIS SOURCE",
+                                                       Style.RESET_ALL))
     print("-" * 80)
     for prefix in data['data']['prefixes']:
         bgp_status = _paint_green("OK") if prefix['in_bgp'] else _paint_red("NO ROUTE")
@@ -42,11 +53,16 @@ def print_prefix_info():
         irr_sources = ", ".join(prefix["irr_sources"])
         print("{:>30s}{:>22s}{:>22s}\t{:s}".format(prefix['prefix'], bgp_status, whois_status, irr_sources))
 
+
 def print_import_info():
+    """
+    Compare actual BGP peerings with the ones defined in aut-num import object
+    :return:
+    """
     global data
 
     print("=" * 80)
-    print(Style.BRIGHT  + Back.BLUE, "{:78s}".format("IMPORTS"), Style.RESET_ALL)
+    print(Style.BRIGHT + Back.BLUE, "{:78s}".format("IMPORTS"), Style.RESET_ALL)
 
     if not len(data['data']['imports']):
         print("-" * 80)
@@ -63,7 +79,12 @@ def print_import_info():
         peer_asn = "AS{:d}".format(imports['peer'])
         print("{:>10s}{:>25s}{:>25s}".format(peer_asn, bgp_status, whois_status))
 
+
 def print_export_info():
+    """
+    Compare actual BGP peerings with the ones defined in aut-num export object
+    :return:
+    """
     global data
 
     print("=" * 80)
@@ -84,6 +105,7 @@ def print_export_info():
         peer_asn = "AS{:d}".format(exports['peer'])
         print("{:>10s}{:>25s}{:>25s}".format(peer_asn, bgp_status, whois_status))
 
+
 def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
     """
     Argparse type checker
@@ -97,12 +119,23 @@ def asn_type(asn, pattern=re.compile(r"^(AS)?([0-9]+)$")):
     else:
         raise argparse.ArgumentTypeError("ASN should be in AS1234 or 1234 format")
 
+
 def _paint_green(str):
+    """
+    Encapsulate string with terminal color (green)
+    :param str:
+    :return:
+    """
     return Fore.LIGHTGREEN_EX + str + Fore.RESET
 
-def _paint_red(str):
-    return Fore.LIGHTRED_EX + str + Fore.RESET
 
+def _paint_red(str):
+    """
+    Encapsulate string with terminal color (red)
+    :param str:
+    :return:
+    """
+    return Fore.LIGHTRED_EX + str + Fore.RESET
 
 
 # Colorama init
@@ -128,7 +161,8 @@ try:
         status = data['status']
         if status == 'ok':
             print("=" * 80)
-            print("{:20s}:\t{:s}AS{:s}{:s}".format("Resource ASN", Style.BRIGHT, data['data']['resource'], Style.RESET_ALL))
+            print("{:20s}:\t{:s}AS{:s}{:s}".format("Resource ASN", Style.BRIGHT, data['data']['resource'],
+                                                   Style.RESET_ALL))
             print("{:20s}:\t{:s}{:s}{:s}".format("Authority", Style.BRIGHT, data['data']['authority'], Style.RESET_ALL))
             print_request_info()
             if args.prefixes:
